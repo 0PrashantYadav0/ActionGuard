@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ActionGuard — Execution Firewall Console</title>
+<style>
+  :root {
+    --bg: #0b0f14; --panel: #121821; --panel2: #18202b; --line: #243042;
+    --text: #e6edf3; --muted: #8b98a8;
+    --allow: #2ecc71; --review: #f5b041; --deny: #ff4d5e; --accent: #4fd1c5;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text);
+         font: 14px/1.45 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  header { display: flex; align-items: center; gap: 16px; padding: 14px 24px;
+           border-bottom: 1px solid var(--line); background: #0e141b; position: sticky; top: 0; z-index: 2; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: .2px; }
+  .brand small { color: var(--muted); font-weight: 400; font-size: 13px; }
+  .spacer { flex: 1; }
+  .chip { font: 12px var(--mono); color: var(--muted); border: 1px solid var(--line);
+          padding: 4px 10px; border-radius: 999px; display: inline-flex; gap: 6px; align-items: center; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); }
+  .dot.live { background: var(--allow); box-shadow: 0 0 8px var(--allow); }
+  button { font: inherit; cursor: pointer; border-radius: 8px; border: 1px solid var(--line);
+           background: var(--panel2); color: var(--text); padding: 7px 14px; }
+  button:hover { border-color: var(--accent); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .kill { background: #3a1016; border-color: #6b1d27; color: #ffd6da; font-weight: 600; }
+  .kill.on { background: var(--deny); color: #fff; border-color: var(--deny); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 50% { box-shadow: 0 0 0 6px rgba(255,77,94,.25); } }
+  @media (prefers-reduced-motion: reduce) { .kill.on, .row.new { animation: none !important; } }
+  .banner { display: none; background: var(--deny); color: #fff; text-align: center; padding: 8px; font-weight: 600; }
+  .banner.on { display: block; }
+
+  main { padding: 20px 24px; display: grid; gap: 20px; grid-template-columns: minmax(0, 1fr) 360px; }
+  .stats { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+  .stat { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; }
+  .stat .n { font: 700 30px/1.1 var(--mono); }
+  .stat .l { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .6px; }
+  .stat.allow .n { color: var(--allow); } .stat.review .n { color: var(--review); } .stat.deny .n { color: var(--deny); }
+
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  section h2 { margin: 0; font-size: 13px; text-transform: uppercase; letter-spacing: .8px; color: var(--muted);
+               padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; }
+  .side { display: flex; flex-direction: column; gap: 20px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-weight: 500; color: var(--muted); font-size: 12px; padding: 8px 12px; border-bottom: 1px solid var(--line); }
+  td { padding: 9px 12px; border-bottom: 1px solid #1a2330; vertical-align: top; }
+  .row { cursor: pointer; }
+  .row:hover td { background: #151d27; }
+  .row.new { animation: flash 1.4s ease-out; }
+  @keyframes flash { from { background: #20304a; } }
+  .mono { font-family: var(--mono); font-size: 12.5px; }
+  .args { color: #b6c2cf; max-width: 420px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pill { font: 600 11px var(--mono); padding: 3px 8px; border-radius: 6px; text-transform: uppercase; white-space: nowrap; }
+  .s-allowed, .s-approved { background: rgba(46,204,113,.15); color: var(--allow); }
+  .s-pending { background: rgba(245,176,65,.15); color: var(--review); }
+  .s-denied, .s-rejected, .s-expired { background: rgba(255,77,94,.15); color: var(--deny); }
+  .risk { display: flex; align-items: center; gap: 8px; }
+  .bar { width: 60px; height: 6px; background: #223; border-radius: 3px; overflow: hidden; }
+  .bar i { display: block; height: 100%; }
+  .detail td { background: #0f151d; color: var(--muted); font-size: 13px; }
+  .detail ul { margin: 4px 0; padding-left: 18px; }
+  .detail b { color: var(--text); font-family: var(--mono); font-weight: 500; }
+  .feed { max-height: calc(100vh - 230px); overflow: auto; }
+  .empty { color: var(--muted); padding: 22px 16px; text-align: center; }
+
+  .card { padding: 14px 16px; border-bottom: 1px solid var(--line); }
+  .card .t { font-weight: 600; margin-bottom: 4px; }
+  .card .why { color: var(--review); font-size: 12.5px; margin: 6px 0 10px; }
+  .card .btns { display: flex; gap: 8px; }
+  .approve { background: rgba(46,204,113,.15); border-color: #1f6f43; color: var(--allow); font-weight: 600; }
+  .reject { background: rgba(255,77,94,.12); border-color: #6b1d27; color: var(--deny); font-weight: 600; }
+  .audit { padding: 14px 16px; }
+  .verdict { margin-top: 10px; font-family: var(--mono); font-size: 13px; }
+  .rules { max-height: 300px; overflow: auto; }
+  .rule { display: flex; gap: 8px; padding: 7px 16px; border-bottom: 1px solid #1a2330; font-size: 12.5px; }
+  .rule .e { width: 54px; flex: none; font: 600 10.5px var(--mono); text-transform: uppercase; padding-top: 2px; }
+  .e-allow { color: var(--allow); } .e-review { color: var(--review); } .e-deny { color: var(--deny); } .e-flag { color: var(--accent); }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } .stats { grid-template-columns: repeat(2, 1fr); } }
+</style>
+</head>
+<body>
+<div class="banner" id="banner" role="alert">🛑 LOCKDOWN ACTIVE — every agent action is being denied</div>
+<header>
+  <div class="brand">
+    <svg width="26" height="26" viewBox="0 0 24 24" aria-hidden="true"><path fill="#4fd1c5" d="M12 2 4 5v6c0 5 3.4 9.7 8 11 4.6-1.3 8-6 8-11V5l-8-3Zm-1.2 14.2-3.5-3.5 1.4-1.4 2.1 2.1 4.8-4.8 1.4 1.4-6.2 6.2Z"/></svg>
+    ActionGuard <small>execution firewall for AI agents</small>
+  </div>
+  <div class="spacer"></div>
+  <span class="chip" id="policy">policy: …</span>
+  <span class="chip"><span class="dot" id="live"></span><span id="liveText">connecting</span></span>
+  <button class="kill" id="kill" aria-pressed="false">Kill switch</button>
+</header>
+
+<main>
+  <div class="stats">
+    <div class="stat"><div class="n" id="st-total">0</div><div class="l">Actions inspected</div></div>
+    <div class="stat allow"><div class="n" id="st-allowed">0</div><div class="l">Allowed / approved</div></div>
+    <div class="stat review"><div class="n" id="st-pending">0</div><div class="l">Awaiting human</div></div>
+    <div class="stat deny"><div class="n" id="st-denied">0</div><div class="l">Blocked</div></div>
+    <div class="stat"><div class="n" id="st-agents">0</div><div class="l">Agents seen</div></div>
+  </div>
+
+  <section>
+    <h2>Live action feed <span id="count"></span></h2>
+    <div class="feed">
+      <table>
+        <thead><tr><th>#</th><th>Time</th><th>Agent</th><th>Tool</th><th>Arguments</th><th>Risk</th><th>Status</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+      <div class="empty" id="empty">No actions yet. Run <span class="mono">python demo/run_demo.py</span></div>
+    </div>
+  </section>
+
+  <div class="side">
+    <section>
+      <h2>Awaiting approval <span id="pcount">0</span></h2>
+      <div id="pending"><div class="empty">Nothing waiting</div></div>
+    </section>
+    <section>
+      <h2>Audit ledger</h2>
+      <div class="audit">
+        <div style="color:var(--muted);font-size:13px">Every decision is SHA-256 hash-chained to the one before it. Editing any past entry breaks the chain.</div>
+        <div style="margin-top:10px"><button id="verify">Verify audit chain</button></div>
+        <div class="verdict" id="verdict" aria-live="polite"></div>
+      </div>
+    </section>
+    <section>
+      <h2>Active policy <span id="rcount"></span></h2>
+      <div class="rules" id="rules"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const token = new URLSearchParams(location.search).get("token") || "";
+const actions = new Map();
+let lockdown = false;
+
+async function api(path, body) {
+  const opts = body ? { method: "POST", headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                        body: JSON.stringify({ by: "dashboard", ...body }) } : {};
+  const r = await fetch(path, opts);
+  if (r.status === 401) alert("Admin token missing or wrong. Open the URL printed by the gateway (it ends with ?token=…).");
+  return r.json();
+}
+
+function riskColor(r) { return r >= 90 ? "var(--deny)" : r >= 50 ? "var(--review)" : "var(--allow)"; }
+function argText(a) { return Object.entries(a.args).map(([k, v]) => `${k}=${JSON.stringify(v)}`).join("  "); }
+
+function rowHtml(a) {
+  const t = new Date(a.ts * 1000).toLocaleTimeString();
+  return `<td class="mono">${a.id}</td><td class="mono">${t}</td><td>${esc(a.agent)}</td>
+    <td class="mono">${esc(a.tool)}</td><td class="mono args" title="${esc(argText(a))}">${esc(argText(a))}</td>
+    <td><div class="risk"><div class="bar"><i style="width:${a.risk}%;background:${riskColor(a.risk)}"></i></div><span class="mono">${a.risk}</span></div></td>
+    <td><span class="pill s-${esc(a.status)}">${esc(a.status)}</span></td>`;
+}
+
+function detailHtml(a) {
+  const rs = a.reasons.map(r => `<li><b>${esc(r.rule)}</b> → ${esc(r.effect)}${r.risk ? ` (+${r.risk} risk)` : ""} — ${esc(r.description)}</li>`).join("");
+  const who = a.decided_by ? `<div>Decided by <b>${esc(a.decided_by)}</b></div>` : "";
+  return `<td colspan="7"><div>Why: engine verdict <b>${esc(a.decision)}</b></div><ul>${rs}</ul>${who}
+    <div class="mono" style="white-space:pre-wrap;color:#b6c2cf">${esc(JSON.stringify(a.args, null, 2))}</div></td>`;
+}
+
+function upsert(a, isNew) {
+  actions.set(a.id, a);
+  let tr = document.querySelector(`tr[data-id="${a.id}"]`);
+  if (!tr) {
+    tr = document.createElement("tr");
+    tr.className = "row" + (isNew ? " new" : "");
+    tr.dataset.id = a.id;
+    tr.tabIndex = 0;
+    tr.onclick = tr.onkeydown = e => { if (e.type === "click" || e.key === "Enter") toggle(a.id); };
+    $("rows").prepend(tr);
+  }
+  tr.innerHTML = rowHtml(a);
+  const d = document.querySelector(`tr[data-detail="${a.id}"]`);
+  if (d) d.innerHTML = detailHtml(a);
+  $("empty").style.display = "none";
+  $("count").textContent = actions.size;
+}
+
+function toggle(id) {
+  const d = document.querySelector(`tr[data-detail="${id}"]`);
+  if (d) return d.remove();
+  const tr = document.createElement("tr");
+  tr.className = "detail"; tr.dataset.detail = id;
+  tr.innerHTML = detailHtml(actions.get(id));
+  document.querySelector(`tr[data-id="${id}"]`).after(tr);
+}
+
+function renderPending() {
+  const p = [...actions.values()].filter(a => a.status === "pending").sort((a, b) => a.id - b.id);
+  $("pcount").textContent = p.length;
+  $("pending").innerHTML = p.length ? p.map(a => `
+    <div class="card"><div class="t">#${a.id} · ${esc(a.agent)} → <span class="mono">${esc(a.tool)}</span></div>
+      <div class="mono args" style="max-width:none;white-space:normal">${esc(argText(a))}</div>
+      <div class="why">${a.reasons.filter(r => r.effect !== "allow").map(r => esc(r.description)).join(" · ")}</div>
+      <div class="btns"><button class="approve" data-act="approve" data-id="${a.id}">Approve</button>
+      <button class="reject" data-act="reject" data-id="${a.id}">Reject</button></div></div>`).join("")
+    : `<div class="empty">Nothing waiting</div>`;
+}
+$("pending").onclick = async e => {
+  const b = e.target.closest("button[data-act]");
+  if (!b) return;
+  b.disabled = true;
+  await api(`/v1/actions/${b.dataset.id}/${b.dataset.act}`, {});
+};
+
+async function refreshStats() {
+  const s = await api("/v1/stats");
+  $("st-total").textContent = s.total;
+  $("st-allowed").textContent = s.allowed + s.approved;
+  $("st-pending").textContent = s.pending;
+  $("st-denied").textContent = s.denied + s.rejected + s.expired;
+  $("st-agents").textContent = s.agents;
+  setLockdown(s.lockdown);
+}
+
+function setLockdown(on) {
+  lockdown = on;
+  $("kill").classList.toggle("on", on);
+  $("kill").setAttribute("aria-pressed", on);
+  $("kill").textContent = on ? "Release lockdown" : "Kill switch";
+  $("banner").classList.toggle("on", on);
+}
+$("kill").onclick = () => api("/v1/lockdown", { enabled: !lockdown });
+
+$("verify").onclick = async () => {
+  const v = await api("/v1/audit/verify");
+  $("verdict").innerHTML = v.ok
+    ? `<span style="color:var(--allow)">✔ Chain intact</span> — ${v.checked} entries<br><span style="color:var(--muted)">head ${esc(v.head.slice(0, 24))}…</span>`
+    : `<span style="color:var(--deny)">✖ TAMPERING DETECTED</span> at entry #${v.broken_at}<br><span style="color:var(--muted)">${v.checked} entries verified before the break</span>`;
+};
+
+async function loadPolicy() {
+  const p = await api("/v1/policy");
+  $("policy").textContent = "policy: " + p.name;
+  $("rcount").textContent = p.rules.length + " rules";
+  $("rules").innerHTML = p.rules.map(r => `<div class="rule"><span class="e e-${esc(r.effect)}">${esc(r.effect)}</span>
+    <span><span class="mono">${esc(r.id)}</span><br><span style="color:var(--muted)">${esc(r.description || "")}</span></span></div>`).join("");
+}
+
+function connect() {
+  const es = new EventSource("/v1/events");
+  es.onopen = () => { $("live").classList.add("live"); $("liveText").textContent = "live"; };
+  es.onerror = () => { $("live").classList.remove("live"); $("liveText").textContent = "reconnecting"; };
+  es.onmessage = e => {
+    const m = JSON.parse(e.data);
+    if (m.type === "action") { upsert(m.data, !actions.has(m.data.id)); renderPending(); refreshStats(); }
+    if (m.type === "lockdown") setLockdown(m.data.enabled);
+    if (m.type === "policy") loadPolicy();
+  };
+}
+
+(async () => {
+  const list = await api("/v1/actions");
+  list.reverse().forEach(a => upsert(a, false));
+  renderPending();
+  await Promise.all([refreshStats(), loadPolicy()]);
+  connect();
+})();
+</script>
+</body>
+</html>

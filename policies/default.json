@@ -1,0 +1,167 @@
+{
+  "name": "acme-default-v1",
+  "default_decision": "review",
+  "review_threshold": 50,
+  "deny_threshold": 90,
+  "approval_timeout_seconds": 120,
+  "rate_limit": { "max_actions": 20, "window_seconds": 10 },
+  "rules": [
+    {
+      "id": "allow-workspace-reads",
+      "description": "Reading project files inside the workspace is routine",
+      "tool": "read_file",
+      "when": { "path": "^(?![/~])(?!.*\\.\\.)" },
+      "effect": "allow"
+    },
+    {
+      "id": "allow-safe-shell",
+      "description": "Read-only / test shell commands with no chaining or redirection",
+      "tool": "run_shell",
+      "when": { "command": "^(ls|pwd|whoami|date|git (status|log|diff)|pytest|npm test)( [^;&|`$<>\\n\\r]*)?\\Z" },
+      "effect": "allow"
+    },
+    {
+      "id": "allow-select-queries",
+      "description": "Read-only SQL",
+      "tool": "db_query",
+      "when": { "sql": "^\\s*select\\b" },
+      "effect": "allow"
+    },
+    {
+      "id": "allow-trusted-domains",
+      "description": "HTTP calls to allow-listed domains",
+      "tool": "http_request",
+      "when": { "url": "^https://(api\\.github\\.com|docs\\.example\\.com|pypi\\.org)/" },
+      "effect": "allow"
+    },
+    {
+      "id": "allow-internal-email",
+      "description": "Email to colleagues inside acme.com",
+      "tool": "send_email",
+      "when": { "to": "^[^,;\\s]+@acme\\.com$" },
+      "effect": "allow"
+    },
+    {
+      "id": "allow-small-payments",
+      "description": "Positive payments are allowed by default; large ones are escalated below",
+      "tool": "transfer_funds",
+      "when": { "amount": "^\\d+(\\.\\d+)?$" },
+      "effect": "allow"
+    },
+
+    {
+      "id": "deny-destructive-shell",
+      "description": "Destructive or system-level shell command",
+      "tool": "run_shell",
+      "when": { "command": "rm\\s+-[a-z]*(rf|fr)|mkfs|\\bdd\\s+if=|:\\(\\)\\s*\\{|\\bshutdown\\b|\\breboot\\b|chmod\\s+-R\\s+777" },
+      "effect": "deny",
+      "risk": 100
+    },
+    {
+      "id": "deny-remote-code-exec",
+      "description": "Piping downloaded content straight into a shell",
+      "tool": "run_shell",
+      "when": { "command": "(curl|wget)[^|]*\\|\\s*(sudo\\s+)?(ba|z)?sh\\b" },
+      "effect": "deny",
+      "risk": 100
+    },
+    {
+      "id": "deny-credential-access",
+      "description": "Touching SSH keys, cloud credentials or system secrets",
+      "tool": "*",
+      "when": { "*": "\\.ssh/|id_rsa|id_ed25519|\\.aws/credentials|/etc/shadow|\\.kube/config" },
+      "effect": "deny",
+      "risk": 100
+    },
+    {
+      "id": "deny-destructive-sql",
+      "description": "Dropping/truncating tables or DELETE without WHERE",
+      "tool": "db_query",
+      "when": { "sql": "\\b(drop\\s+(table|database)|truncate\\s+table)\\b|^\\s*delete\\s+from\\s+\\w+\\s*;?\\s*$" },
+      "effect": "deny",
+      "risk": 100
+    },
+    {
+      "id": "deny-secret-exfiltration",
+      "description": "Outbound data contains an API key or private key",
+      "tool": ["http_request", "send_email"],
+      "when": { "*": "AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY|sk-[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{36}" },
+      "effect": "deny",
+      "risk": 100
+    },
+
+    {
+      "id": "review-large-payment",
+      "description": "Payment above 1,000 needs a human",
+      "tool": "transfer_funds",
+      "above": { "amount": 1000 },
+      "effect": "review",
+      "risk": 40
+    },
+    {
+      "id": "review-git-push",
+      "description": "Pushing code changes shared state",
+      "tool": "run_shell",
+      "when": { "command": "\\bgit\\s+push\\b" },
+      "effect": "review",
+      "risk": 30
+    },
+    {
+      "id": "review-external-email",
+      "description": "Email leaving the organisation",
+      "tool": "send_email",
+      "when": { "to": "^(?![^,;\\s]+@acme\\.com$)" },
+      "effect": "review",
+      "risk": 30
+    },
+    {
+      "id": "review-db-writes",
+      "description": "SQL that modifies data",
+      "tool": "db_query",
+      "when": { "sql": "^\\s*(insert|update|delete|alter|create)\\b" },
+      "effect": "review",
+      "risk": 30
+    },
+
+    {
+      "id": "flag-force-push",
+      "description": "Force push can destroy history",
+      "tool": "run_shell",
+      "when": { "command": "\\bgit\\s+push\\b.*(--force|\\s-f\\b)" },
+      "effect": "flag",
+      "risk": 40
+    },
+    {
+      "id": "flag-env-file",
+      "description": "Environment files usually hold secrets",
+      "tool": "*",
+      "when": { "*": "\\.env\\b" },
+      "effect": "flag",
+      "risk": 60
+    },
+    {
+      "id": "flag-unknown-domain",
+      "description": "Network call to a domain that is not allow-listed",
+      "tool": "http_request",
+      "when": { "url": "^(?!https://(api\\.github\\.com|docs\\.example\\.com|pypi\\.org)/)" },
+      "effect": "flag",
+      "risk": 50
+    },
+    {
+      "id": "flag-sudo",
+      "description": "Privilege escalation",
+      "tool": "run_shell",
+      "when": { "command": "\\bsudo\\b" },
+      "effect": "flag",
+      "risk": 50
+    },
+    {
+      "id": "flag-pii",
+      "description": "Looks like a card number or national ID in the payload",
+      "tool": "*",
+      "when": { "*": "\\b(?:\\d[ -]?){13,16}\\b|\\b\\d{3}-\\d{2}-\\d{4}\\b" },
+      "effect": "flag",
+      "risk": 40
+    }
+  ]
+}
