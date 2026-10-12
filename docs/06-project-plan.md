@@ -223,13 +223,26 @@ $$E = a\,(\text{KLOC})^{b} \qquad D = c\,(E)^{d} \qquad P = E / D$$
 
 ---
 
-## 8. Team roles (placeholders)
+## 8. Team
 
-| Role | Name | Responsibilities |
+| Name | Roll No. | Programme |
 |---|---|---|
-| Project lead / PM | `<Student Name 1>` | Schedule, risk register, integration, reviews |
-| Policy engine & security lead | `<Student Name 2>` | `engine.py`, `policies/default.json`, threat model |
-| Backend & SDK developer | `<Student Name 3>` | `server.py`, `store.py`, `sdk.py` |
-| Front end & demo lead | `<Student Name 4>` | `dashboard/index.html`, `demo/`, panel runbook |
-| Testing & documentation | Shared | `tests/`, `docs/` |
-| Guide | `<Guide Name>` | Technical direction and evaluation |
+| Prashant Kumar Yadav | LCI2023025 | CSAI |
+| Dishant Garg | LCB2023011 | CSB |
+| Gagan Mishra | LCI2023038 | CSAI |
+| Gaurav Ghodinde | LCB2023032 | CSB |
+| Pranay Naman Buradkar | LIT2023027 | IT |
+
+Guide: `<Guide Name>`. Institution: Indian Institute of Information Technology, Lucknow (IIIT Lucknow).
+
+### Work packages
+
+Fill in the owner of each package. The panel may ask who built what.
+
+| Work package | Owner(s) | Responsibilities |
+|---|---|---|
+| Project lead / PM | `<assign>` | Schedule, risk register, integration, reviews |
+| Policy engine & security | `<assign>` | `engine.py`, `policies/default.json`, threat model |
+| Backend & SDK | `<assign>` | `server.py`, `store.py`, `sdk.py` |
+| Front end & demo | `<assign>` | `dashboard/index.html`, `demo/`, panel runbook |
+| Testing & documentation | `<assign>` | `tests/`, `docs/` |

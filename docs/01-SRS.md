@@ -3,7 +3,9 @@
 **Project:** ActionGuard, an execution firewall for AI agents
 **Version:** 1.0 (matches `actionguard.__version__ = "1.0.0"`)
 **Standard followed:** IEEE Std 830-1998 structure, with ISO/IEC/IEEE 29148:2018 requirement attributes
-**Prepared by:** `<Student Name(s)>` **Guide:** `<Guide Name>` **Institution:** `<College>`
+**Prepared by:** Prashant Kumar Yadav, Dishant Garg, Gagan Mishra, Gaurav Ghodinde, Pranay Naman Buradkar  
+**Guide:** `<Guide Name>`  
+**Institution:** Indian Institute of Information Technology, Lucknow (IIIT Lucknow)
 
 ---
 

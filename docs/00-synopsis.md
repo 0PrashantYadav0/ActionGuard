@@ -4,10 +4,10 @@
 |---|---|
 | **Project title** | ActionGuard: an execution firewall for AI agents |
 | **Domain** | AI Security / Cyber Security |
-| **Degree** | B.Tech / B.E., Computer Science and Engineering (Final-year project) |
-| **Team** | `<Student Name 1>` (`<Roll No.>`), `<Student Name 2>` (`<Roll No.>`), `<Student Name 3>` (`<Roll No.>`) |
-| **Guide** | `<Guide Name>`, `<Designation>`, Department of CSE |
-| **Institution** | `<College>`, `<University>` |
+| **Degree** | B.Tech: CS & AI (CSAI), CS & Business (CSB), Information Technology (IT). Final-year project |
+| **Team** | Prashant Kumar Yadav (LCI2023025, CSAI), Dishant Garg (LCB2023011, CSB), Gagan Mishra (LCI2023038, CSAI), Gaurav Ghodinde (LCB2023032, CSB), Pranay Naman Buradkar (LIT2023027, IT) |
+| **Guide** | `<Guide Name>`, `<Designation>` |
+| **Institution** | Indian Institute of Information Technology, Lucknow (IIIT Lucknow) |
 | **Academic year** | 2026–27 |
 
 ---

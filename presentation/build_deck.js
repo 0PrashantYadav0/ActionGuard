@@ -41,7 +41,7 @@ pres.layout = "LAYOUT_WIDE"; // 13.333 x 7.5
 pres.theme = { headFontFace: THEME.headFontFace, bodyFontFace: THEME.bodyFontFace };
 pres.title = "ActionGuard: the execution firewall for AI agents";
 pres.subject = "Final year project review 2026";
-pres.author = "<Student Name(s)>";
+pres.author = "Prashant Kumar Yadav, Dishant Garg, Gagan Mishra, Gaurav Ghodinde, Pranay Naman Buradkar";
 const C = pres.SchemeColor;
 const K = {
   ink: C.text1, white: C.background1, panel: C.text2, light: C.background2,
@@ -179,11 +179,14 @@ async function build() {
     pill(s, "review", L + 1.4, 4.05, 1.35, 0.42, null, { dark: true, size: 13 });
     pill(s, "deny", L + 2.9, 4.05, 1.15, 0.42, null, { dark: true, size: 13 });
     T(s, [
-      { text: "<Student Name(s)> · <Roll No.>", options: { fontSize: 18, bold: true, color: K.white, breakLine: true } },
-      { text: "Guide: <Guide Name>", options: { fontSize: 16, color: HX.soft, breakLine: true } },
-      { text: "<Department, College>", options: { fontSize: 16, color: HX.soft, breakLine: true } },
-      { text: "Final Year Project Review · 2026", options: { fontSize: 14, color: K.teal } },
-    ], { x: L, y: 4.95, w: 6.8, h: 1.6, paraSpaceAfter: 4 });
+      { text: "Prashant Kumar Yadav", options: { fontSize: 13, bold: true, color: K.white } }, { text: "  LCI2023025 · CSAI", options: { fontSize: 12, color: HX.soft, breakLine: true } },
+      { text: "Dishant Garg", options: { fontSize: 13, bold: true, color: K.white } }, { text: "  LCB2023011 · CSB", options: { fontSize: 12, color: HX.soft, breakLine: true } },
+      { text: "Gagan Mishra", options: { fontSize: 13, bold: true, color: K.white } }, { text: "  LCI2023038 · CSAI", options: { fontSize: 12, color: HX.soft, breakLine: true } },
+      { text: "Gaurav Ghodinde", options: { fontSize: 13, bold: true, color: K.white } }, { text: "  LCB2023032 · CSB", options: { fontSize: 12, color: HX.soft, breakLine: true } },
+      { text: "Pranay Naman Buradkar", options: { fontSize: 13, bold: true, color: K.white } }, { text: "  LIT2023027 · IT", options: { fontSize: 12, color: HX.soft, breakLine: true } },
+      { text: "Guide: <Guide Name>  ·  IIIT Lucknow", options: { fontSize: 13, color: HX.soft, breakLine: true } },
+      { text: "Final Year Project Review · 2026", options: { fontSize: 12, color: K.teal } },
+    ], { x: L, y: 4.7, w: 6.8, h: 2.35, paraSpaceAfter: 2, valign: "top" });
 
     // console card: what the gateway prints for three calls
     box(s, 8.0, 1.55, 4.73, 4.6, { fill: HX.panel, line: HX.panelLine, radius: 0.08, name: "console-card" });
@@ -1050,7 +1053,7 @@ async function build() {
       { text: "Try it yourself", options: { bold: true, color: K.white, fontSize: 16, breakLine: true } },
       { text: "python3 -m actionguard", options: { fontFace: MONO, color: K.teal, fontSize: 15, breakLine: true } },
       { text: "python3 demo/run_demo.py", options: { fontFace: MONO, color: K.teal, fontSize: 15, breakLine: true } },
-      { text: "<Student Name(s)> · Guide: <Guide Name>", options: { color: HX.soft, fontSize: 14 } },
+      { text: "Team ActionGuard · IIIT Lucknow", options: { color: HX.soft, fontSize: 14 } },
     ], { x: L, y: 4.95, w: 7, h: 1.6, paraSpaceAfter: 4 });
     circle(s, 8.85, 1.75, 3.6, HX.panel, { line: HX.panelLine });
     await icon(s, "FaShieldHalved", HX.teal, 9.85, 2.75, 1.6);
